@@ -1,0 +1,21 @@
+# 学習・推論の出力 (ckpt, metrics, プロット)
+runs/
+*.ckpt
+*.pt
+*.pth
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# エディタ / OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
