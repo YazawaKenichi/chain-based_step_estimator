@@ -28,8 +28,8 @@ python3 train.py ~/raspicat2/rosbags/chain/tsudanuma/tooi/dataset_circuit_v2
 | `--epochs` / `--batch-size` / `--lr` | 200 / 16 / 1e-3 | |
 | `--rnn` / `--hidden` / `--layers` / `--dropout` | gru / 64 / 2 / 0.1 | |
 | `--baseline-n` | `10` | ベースラインに使う先頭のサンプル数 (約 0.92 s) |
-| `--no-crop` | | 学習時に系列の先頭をランダムに切り落とすのをやめる |
-| `--no-class-weight` | | クラス頻度の逆数による損失の重み付けをやめる |
+| `--crop` | | 学習時に系列の先頭をランダムに切り落とす (走り出しの誤検出が増えるので既定では使わない) |
+| `--class-weight` | | クラス頻度の逆数で損失を重み付けする (陽性に倒れやすくなるので既定では使わない) |
 | `--seed` | `0` | 分割と初期値の乱数 |
 
 `python3 train.py -h` で全オプションを表示する。

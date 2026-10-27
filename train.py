@@ -47,10 +47,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument('--dropout', type=float, default=0.1)
     p.add_argument('--baseline-n', type=int, default=10,
                    help='ベースラインに使う先頭のサンプル数 (約 0.092 s/サンプル)')
-    p.add_argument('--no-crop', action='store_true',
-                   help='学習時に系列の先頭をランダムに切り落とさない '
-                        '(切り落とすと「起動から何秒後か」で当てる癖を防げる)')
-    p.add_argument('--no-class-weight', action='store_true', help='クラス頻度の逆数で損失を重み付けしない')
+    # crop・クラス重みはどちらも走り出しの加速を接触と誤検出しやすくなるので既定では使わない
+    p.add_argument('--crop', action='store_true',
+                   help='学習時に系列の先頭をランダムに切り落とす '
+                        '(「起動から何秒後か」で当てる癖は防げるが、走り出しの区間を学習しにくくなる)')
+    p.add_argument('--class-weight', action='store_true', help='クラス頻度の逆数で損失を重み付けする')
     p.add_argument('--tolerance', type=float, default=0.5,
                    help='接触検出の評価で、正解より何秒前までの検出を許すか')
     p.add_argument('--onset-k', type=int, default=3,
@@ -146,7 +147,7 @@ def main() -> None:
     model = StepRNN(heads={h.name: len(h.classes) for h in heads}, **model_cfg).to(device)
     losses = {}
     for h in heads:
-        w = None if args.no_class_weight else class_weights(train_bags, targets, h.name, len(h.classes)).to(device)
+        w = class_weights(train_bags, targets, h.name, len(h.classes)).to(device) if args.class_weight else None
         losses[h.name] = nn.CrossEntropyLoss(weight=w, ignore_index=IGNORE)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
@@ -171,7 +172,7 @@ def main() -> None:
         for i in range(0, len(order), args.batch_size):
             batch = [train_bags[j] for j in order[i:i + args.batch_size]]
             x, y = make_batch(batch, targets, head_names, feat_cfg,
-                              None if args.no_crop else rng, device)
+                              rng if args.crop else None, device)
             loss = batch_loss(x, y)
             opt.zero_grad()
             loss.backward()
